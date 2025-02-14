@@ -4,7 +4,7 @@ import numpy as np
 import cantera as ct
 
 # The simulation integrates in time for these values:
-nstep = 15000
+nstep = 10000
 step_size = 5.e-8
 
 # Defines the homogeneous mixture properties for use in the reactor
