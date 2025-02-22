@@ -9,7 +9,5 @@ def rhs(t,state_in,gas):
     gas.TDY = T,rho0,Y[:]
     rhs_out = np.copy(state_in)
     rhs_out[0:Neq-1] = gas.net_production_rates*gas.molecular_weights/gas.density
-    for i in range(gas.n_species):
-        rhs_out[Neq-1] = rhs_out[Neq-1] - gas.net_production_rates[i]*gas.standard_int_energies_RT[i]*ct.gas_constant*gas.T
-    rhs_out[Neq-1] = rhs_out[Neq-1]/(gas.cp_mass*gas.density)
+    rhs_out[Neq-1] = -1.*ct.gas_constant*gas.T/(gas.cp_mass*gas.density)*np.dot(gas.net_production_rates,gas.standard_int_energies_RT)
     return rhs_out
