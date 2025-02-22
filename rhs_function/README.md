@@ -7,5 +7,5 @@ Reference: https://cantera.org/3.1/reference/reactors/ideal-gas-reactor.html
 
 ## Function description
 
-$\textit{state\_in}$: array of size $$N_s+1$$ with mass fractions and temperature.
+state\_in: array of size $$N_s+1$$ with mass fractions and temperature.
 Defining the thermodynamic state: TDY (constant density).
