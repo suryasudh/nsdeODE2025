@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cantera as ct
 
-def rhs(t,state_in,gas):
+def rhs(t,state_in,gas): #variable rho0 assumed to be a global float
     Neq = len(state_in)
     Y = state_in[0:Neq-1]
     T = state_in[Neq-1]
