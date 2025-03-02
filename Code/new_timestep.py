@@ -41,7 +41,7 @@ def get_dt(
     p_main: int = METHOD_ORDERS[main_method] # order of the main scheme
 
     error: float = np.linalg.norm(x_main - x_ref, ord=norm_type)
-    tolerance = 1e-10
+    tolerance = 1e-30
 
     if error < 1e-30:
         error = 1e-30
