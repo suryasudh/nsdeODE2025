@@ -39,7 +39,7 @@ if __name__ == '__main__':
     ##############################################################
     ### NEED SOME SELECTION HERE
     ##############################################################
-    class_of_methods = "rk"                 # select either "rk" or "ab"    (for now rk works properly)
+    class_of_methods = "ab"                 # select either "rk" or "ab"    (for now rk works properly)
     main_num, ref_num = "1", "2"            # select the main and reference methods
 
     required_methods=[f"rk{main_num}", f"rk{ref_num}"]
@@ -100,8 +100,7 @@ if __name__ == '__main__':
             t+=dt
             iter=iter+1
 
-            # calling the function that computes dt
-            # dt = get_dt(dt_old=dt, main_method=required_methods[0], x_main=state_arr_main, x_ref=state_arr_ref, tolerance=1e-10,gamma=0.9,norm_type=2)
+            # initiating with a fixed dt
             dt = 5e-9
 
         while (t < tend):

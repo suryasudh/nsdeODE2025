@@ -1,8 +1,11 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 
-main_scheme = "rk1"
-ref_scheme = "rk2"
+class_of_methods = "ab"
+
+main_scheme_num, ref_scheme_num = "1", "2"
+main_scheme = f"{class_of_methods}{main_scheme_num}"
+ref_scheme = f"{class_of_methods}{ref_scheme_num}"
 time_stepping = "adptv"
 precision_chosen = 64
 
