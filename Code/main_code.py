@@ -5,20 +5,53 @@ import cantera as ct
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-dtype_global = np.float64
-dtype_time = np.float64
+
+dtype_global = None
+dtype_time = None
+
+##############################################################
+### NEED SOME SELECTION HERE
+##############################################################
+precision_str = "64"        #  update this to as required
+
+if precision_str == "64":
+    dtype_global = np.float64
+    dtype_time = np.float64
+elif precision_str == "32":
+    dtype_global = np.float32
+    dtype_time = np.float32
+elif precision_str == "16":
+    dtype_global = np.float16
+    dtype_time = np.float16
+else:
+    raise ValueError("Invalid precision string")
 
 if __name__ == '__main__':
     # Define the initial conditions
     gas_obj = ct.Solution("../yaml_files/h2_sandiego.yaml")
-    T0 = 1000.
+    T0 = 1000.                              # Initial temperature in K
     P0 = 101325.
     X0 = "H2:2.,O2:1.,N2:3.76"
     gas_obj.TPX = T0,P0,X0
     state_arr = np.hstack((gas_obj.Y,gas_obj.T)).ravel().astype(dtype=dtype_global)
     dens_0 = gas_obj.density_mass
-    required_methods=["rk1", "rk2"]
-    required_methods_ab=["ab1", "ab2"]
+
+    ##############################################################
+    ### NEED SOME SELECTION HERE
+    ##############################################################
+    class_of_methods = "rk"                 # select either "rk" or "ab"    (for now rk works properly)
+    main_num, ref_num = "1", "2"            # select the main and reference methods
+
+    required_methods=[f"rk{main_num}", f"rk{ref_num}"]
+    required_methods_ab=[f"ab{main_num}", f"ab{ref_num}"]   # both are needed because ab is not self starting
+
+    file_main_name = f"../../output_{precision_str}_{class_of_methods}{main_num}_{class_of_methods}{ref_num}_adptv_run001_main.csv"
+    file_ref_name = f"../../output_{precision_str}_{class_of_methods}{main_num}_{class_of_methods}{ref_num}_adptv_run001_ref.csv"
+    str_header = f"H2,H,O2,OH,O,H2O,HO2,H2O2,N2,temp,time,dt"
+    file_main = open(file_main_name, "w")
+    file_ref = open(file_ref_name, "w")
+    file_main.write(str_header + "\n")
+    file_ref.write(str_header + "\n")
 
 
     t = np.array(0.0, dtype=dtype_time)
@@ -27,16 +60,6 @@ if __name__ == '__main__':
     iter_interval=2
     dt=np.array(1.e-8, dtype=dtype_time)
 
-
-    file_main_name = "../../output_64_rk1_rk2_adptv_run001_main.csv"
-    file_ref_name = "../../output_64_rk1_rk2_adptv_run001_ref.csv"
-    str_header = "H2,H,O2,OH,O,H2O,HO2,H2O2,N2,temp,time,dt"
-    file_main = open(file_main_name, "w")
-    file_ref = open(file_ref_name, "w")
-    file_main.write(str_header + "\n")
-    file_ref.write(str_header + "\n")
-
-    class_of_methods = "rk" # "rk" or "ab"
 
     if class_of_methods == "ab":
         state_prev_1 = None
@@ -98,6 +121,15 @@ if __name__ == '__main__':
             # calling the function that computes dt
             # dt = get_dt(dt_old=dt, main_method=required_methods[0], x_main=state_arr_main, x_ref=state_arr_ref, tolerance=1e-10,gamma=0.9,norm_type=2)
             dt = 5e-9
+
+            if iter%iter_interval==0:
+                file_main.write(f"{state_arr_main[0]},{state_arr_main[1]},{state_arr_main[2]},{state_arr_main[3]},"+
+                                f"{state_arr_main[4]},{state_arr_main[5]},{state_arr_main[6]},{state_arr_main[7]},"+
+                                f"{state_arr_main[8]},{state_arr_main[9]},{t:.9e},{dt:.9e}\n")
+            
+                file_ref.write(f"{state_arr_ref[0]},{state_arr_ref[1]},{state_arr_ref[2]},{state_arr_ref[3]},"+
+                               f"{state_arr_ref[4]},{state_arr_ref[5]},{state_arr_ref[6]},{state_arr_ref[7]},"+
+                               f"{state_arr_ref[8]},{state_arr_ref[9]},{t:.9e},{dt:.9e}\n")
 
 
 
