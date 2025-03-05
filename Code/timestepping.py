@@ -1,6 +1,5 @@
 import numpy as np
 from typing import Callable
-# import matplotlib.pyplot as plt
 import cantera as ct
 
 def rk_methods(method, dt, xk, f1, f2main, f2_o1, f2_o2,
@@ -146,8 +145,99 @@ def timestepper(tk:float, xk:np.ndarray, dt:float,
     return np.array(required_outputs)
 
 
+####################################################################
+### Adams Bashforth Methods
+####################################################################
+# Similarly now, making functions related to
+# Adam's Bashforth methods
 
-# 
+def ab_methods(method, dt, xk, f1, f2, f3, f4, f5):
+        if method == "ab1" :
+            return ab1(dt, xk, f1)
+        if method == "ab2" :
+            return ab2(dt, xk, f1, f2)
+        if method == "ab3" :
+            return ab3(dt, xk, f1, f2, f3)
+        if method == "ab4" :
+            return ab4(dt, xk, f1, f2, f3, f4)
+        if method == "ab5" :
+            return ab5(dt, xk, f1, f2, f3, f4, f5)
+
+
+def ab1(dt, xk, fn):
+    """
+    """
+    x_out = xk + ((dt) * (fn))
+    return x_out
+
+def ab2(dt, xk, fn, fnm1):
+    """
+    """
+    x_out = xk + ((dt/2) * ((3 * fn) - (1 * fnm1)))
+    return x_out
+
+def ab3(dt, xk, fn, fnm1, fnm2):
+    """
+    """
+    x_out = xk + ((dt/12) * ((23 * fn) - (16 * fnm1) + (5 * fnm2)))
+    return x_out
+
+def ab4(dt, xk, fn, fnm1, fnm2, fnm3):
+    """
+    """
+    x_out = xk + ((dt/24) * ((55 * fn) - (59 * fnm1) + (37 * fnm2) - (9 * fnm3)))
+    return x_out
+
+def ab5(dt, xk, fn, fnm1, fnm2, fnm3, fnm4):
+    """
+    """
+    xout = xk + ((dt/720) * ((1901 * fn) - (2774 * fnm1) + (2616 * fnm2) - (1274 * fnm3) + (251 * fnm4)))
+
+
+
+# TODO: include argument for specifying precision
+def timestepper_ab(tk:float, xk:np.ndarray, dt:float,
+                func:Callable[[float, np.ndarray], np.ndarray],
+                required_methods:list[str], gas_obj:ct.Solution, dens:float, prec) -> np.ndarray:
+    slopes = {
+        "ab1" : {"f1"},
+        "ab2" : {"f1","f2"},
+        "ab3" : {"f1", "f2", "f3"},
+        "ab4" : {"f1", "f2", "f3", "f4"},
+        "ab5" : {"f1", "f2", "f3", "f4", "f5"},
+    }
+
+    required_slopes = set()
+    for i in range(len(required_methods)):
+        required_slopes = required_slopes.union(slopes[required_methods[i]])
+
+    required_slopes = sorted(list(required_slopes))
+    # print(required_slopes)
+
+    f1ab, f2ab, f3ab, f4ab, f5ab = None, None, None, None, None
+
+    for reqdstr1 in required_slopes:
+        if reqdstr1 == 'f1':
+            f1ab = func(tk, xk[0], gas_obj, dens, prec)
+
+        if reqdstr1 == "f2":
+            f2ab = func((tk - (dt * 1)), (xk[1]), gas_obj, dens, prec)
+
+        if reqdstr1 == "f3":
+            f3ab = func((tk - (dt * 2)), (xk[2]), gas_obj, dens, prec)
+
+        if reqdstr1 == "f4":
+            f4ab = func((tk - (dt * 3)), (xk[3]), gas_obj, dens, prec)
+
+        if reqdstr1 == "f5":
+            f5ab = func((tk - (dt * 4)), (xk[4]), gas_obj, dens, prec)
+
+
+    required_outputs = []
+    for _method in required_methods:
+        required_outputs.append(ab_methods(method=_method, dt=dt, xk=xk, f1=f1ab, f2=f2ab, f3=f3ab, f4=f4ab, f5=f5ab))
+
+    return np.array(required_outputs)
 
 
 
