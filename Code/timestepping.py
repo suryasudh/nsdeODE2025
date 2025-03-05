@@ -73,7 +73,7 @@ def rk2_heun(dt, xk, f1, f2_o1):
 # TODO: include argument for specifying precision
 def timestepper(tk:float, xk:np.ndarray, dt:float,
                 func:Callable[[float, np.ndarray], np.ndarray],
-                required_methods:list[str], gas_obj:ct.Solution, dens:float) -> np.ndarray:
+                required_methods:list[str], gas_obj:ct.Solution, dens:float, prec:np.dtype) -> np.ndarray:
     slopes = {
         "rk1" : {"f1"},
         "rk2" : {"f1","f2main"},
@@ -97,44 +97,44 @@ def timestepper(tk:float, xk:np.ndarray, dt:float,
 
     for reqdstr1 in required_slopes:
         if reqdstr1 == 'f1':
-            f1 = func(tk, xk, gas_obj, dens)
+            f1 = func(tk, xk, gas_obj, dens, prec)
 
         if reqdstr1 == "f2_o1":
-            f2_o1 = func((tk + (dt)), (xk + (1 * f1) * dt), gas_obj, dens)
+            f2_o1 = func((tk + (dt)), (xk + (1 * f1) * dt), gas_obj, dens, prec)
 
         if reqdstr1 == "f2main":
-            f2main = func((tk + (dt/2)), (xk + ((1/2) * f1) * dt), gas_obj, dens)
+            f2main = func((tk + (dt/2)), (xk + ((1/2) * f1) * dt), gas_obj, dens, prec)
 
         if reqdstr1 == "f3main":
-            f3main = func((tk + (dt/2)), (xk + ((1/2) * f2main) * dt), gas_obj, dens)
+            f3main = func((tk + (dt/2)), (xk + ((1/2) * f2main) * dt), gas_obj, dens, prec)
 
         if reqdstr1 == "f3_o1":
-            f3_o1 = func((tk + (dt)), (xk + ((-1 * f1) + (2 * f2main)) * dt), gas_obj, dens)
+            f3_o1 = func((tk + (dt)), (xk + ((-1 * f1) + (2 * f2main)) * dt), gas_obj, dens, prec)
 
         if reqdstr1 == "f3_o2":
-            f3_o2 = func((tk + (dt/2)), (xk + (((1/4) * f1) + ((1/4) * f2_o1)) * dt), gas_obj, dens)
+            f3_o2 = func((tk + (dt/2)), (xk + (((1/4) * f1) + ((1/4) * f2_o1)) * dt), gas_obj, dens, prec)
 
         if reqdstr1 == "f4main":
-            f4main = func((tk + dt), (xk + (1 * f3main) * dt), gas_obj, dens)
+            f4main = func((tk + dt), (xk + (1 * f3main) * dt), gas_obj, dens, prec)
 
         if reqdstr1 == "f2_o2":
-            f2_o2 = func((tk + ((1/4) * dt)), (xk + ((1/4) * f1) * dt), gas_obj, dens)
+            f2_o2 = func((tk + ((1/4) * dt)), (xk + ((1/4) * f1) * dt), gas_obj, dens, prec)
 
         if reqdstr1 == "f3_o3":
-            f3_o3 = func((tk + ((1/4) * dt)), (xk + (((1/8) * f1) + ((1/8) * f2_o2)) * dt), gas_obj, dens)
+            f3_o3 = func((tk + ((1/4) * dt)), (xk + (((1/8) * f1) + ((1/8) * f2_o2)) * dt), gas_obj, dens, prec)
 
         if reqdstr1 == "f4_o1":
-            f4_o1 = func((tk + ((1/2) * dt)), (xk + (((-1/2) * f2_o2) + ((1) * f3_o3)) * dt), gas_obj, dens)
+            f4_o1 = func((tk + ((1/2) * dt)), (xk + (((-1/2) * f2_o2) + ((1) * f3_o3)) * dt), gas_obj, dens, prec)
 
         if reqdstr1 == "f5main":
-            f5main = func((tk + ((3/4) * dt)), (xk + (((3/16) * f1) + ((9/16) * f4_o1)) * dt), gas_obj, dens)
+            f5main = func((tk + ((3/4) * dt)), (xk + (((3/16) * f1) + ((9/16) * f4_o1)) * dt), gas_obj, dens, prec)
 
         if reqdstr1 == "f6main":
             f6main == func((tk + (1 * dt)), (xk + (((-3/7) * f1) +
                                                 ((2/7) * f2_o2) +
                                                 ((12/7) * f3_o3) +
                                                 ((-12/7) * f4_o1) +
-                                                ((8/7) * f5main)) * dt), gas_obj, dens)
+                                                ((8/7) * f5main)) * dt), gas_obj, dens, prec)
 
     required_outputs = []
     for _method in required_methods:

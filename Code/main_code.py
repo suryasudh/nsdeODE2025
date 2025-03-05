@@ -32,7 +32,7 @@ if __name__ == '__main__':
     dts_arr = []
     ts_arr = []
     while t<tend:
-        state_new = timestepper(tk=t, xk=state_arr, dt=dt, func=rhs, required_methods=required_methods,gas_obj=gas_obj,dens=dens_0)
+        state_new = timestepper(tk=t, xk=state_arr, dt=dt, func=rhs, required_methods=required_methods,gas_obj=gas_obj,dens=dens_0,prec=dtype_global)
         state_arr_main = state_new[0, 0, :]
         state_arr_ref = state_new[1, 0, :]
         # print(state_new.shape)
