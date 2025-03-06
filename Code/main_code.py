@@ -5,29 +5,28 @@ import cantera as ct
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import pandas as pd
 
-dtype_global = None
-dtype_time = None
+def run_simulation(class_of_methods, main_num, ref_num, precision_str:str, time_step:str, time_step_val=None, tolerance:float=1e-10):
+    dtype_global = None
+    dtype_time = None
 
-##############################################################
-### NEED SOME SELECTION HERE
-##############################################################
-precision_str = "64"        #  update this to as required
+    ##############################################################
+    ### NEED SOME SELECTION HERE
+    ##############################################################
+    # precision_str = "64"        #  update this to as required
 
-if precision_str == "64":
-    dtype_global = np.float64
-    dtype_time = np.float64
-elif precision_str == "32":
-    dtype_global = np.float32
-    dtype_time = np.float32
-elif precision_str == "16":
-    dtype_global = np.float16
-    dtype_time = np.float16
-else:
-    raise ValueError("Invalid precision string")
-
-if __name__ == '__main__':
-    # Define the initial conditions
+    if precision_str == "64":
+        dtype_global = np.float64
+        dtype_time = np.float64
+    elif precision_str == "32":
+        dtype_global = np.float32
+        dtype_time = np.float32
+    elif precision_str == "16":
+        dtype_global = np.float16
+        dtype_time = np.float16
+    else:
+        raise ValueError("Invalid precision string")
     gas_obj = ct.Solution("../yaml_files/h2_sandiego.yaml")
     T0 = 1000.                              # Initial temperature in K
     P0 = 101325.
@@ -39,14 +38,18 @@ if __name__ == '__main__':
     ##############################################################
     ### NEED SOME SELECTION HERE
     ##############################################################
-    class_of_methods = "ab"                 # select either "rk" or "ab"    (for now rk works properly)
-    main_num, ref_num = "1", "2"            # select the main and reference methods
+    # class_of_methods = "rk"                 # select either "rk" or "ab"    (for now rk works properly)
+    # main_num, ref_num = "2", "3"            # select the main and reference methods
+
+    if time_step == "const" and time_step_val is None:
+        raise AssertionError("Time step value needs to be specified for constant time stepping")
+    
 
     required_methods=[f"rk{main_num}", f"rk{ref_num}"]
     required_methods_ab=[f"ab{main_num}", f"ab{ref_num}"]   # both are needed because ab is not self starting
 
-    file_main_name = f"../../output_{precision_str}_{class_of_methods}{main_num}_{class_of_methods}{ref_num}_adptv_run001_main.csv"
-    file_ref_name = f"../../output_{precision_str}_{class_of_methods}{main_num}_{class_of_methods}{ref_num}_adptv_run001_ref.csv"
+    file_main_name = f"../../output_{precision_str}_{class_of_methods}{main_num}_{class_of_methods}{ref_num}_{time_step}_run001_main.csv"
+    file_ref_name = f"../../output_{precision_str}_{class_of_methods}{main_num}_{class_of_methods}{ref_num}_{time_step}_run001_ref.csv"
     str_header = f"H2,H,O2,OH,O,H2O,HO2,H2O2,N2,temp,time,dt"
     file_main = open(file_main_name, "w")
     file_ref = open(file_ref_name, "w")
@@ -118,8 +121,10 @@ if __name__ == '__main__':
             iter=iter+1
 
             # calling the function that computes dt
-            # dt = get_dt(dt_old=dt, main_method=required_methods[0], x_main=state_arr_main, x_ref=state_arr_ref, tolerance=1e-10,gamma=0.9,norm_type=2)
-            dt = 5e-9
+            if time_step == "const":
+                dt = time_step_val
+            elif time_step == "adptv":
+                dt = get_dt(dt_old=dt, main_method=required_methods[0], x_main=state_arr_main, x_ref=state_arr_ref, tolerance=tolerance,gamma=0.9,norm_type=2)
 
             if iter%iter_interval==0:
                 file_main.write(f"{state_arr_main[0]},{state_arr_main[1]},{state_arr_main[2]},{state_arr_main[3]},"+
@@ -143,9 +148,13 @@ if __name__ == '__main__':
             t+=dt
             iter=iter+1
 
-            # calling the function that computes dt
-            dt = get_dt(dt_old=dt, main_method=required_methods[0], x_main=state_arr_main, x_ref=state_arr_ref, tolerance=1e-10,gamma=0.9,norm_type=2)
-            
+            # # calling the function that computes dt
+            # dt = get_dt(dt_old=dt, main_method=required_methods[0], x_main=state_arr_main, x_ref=state_arr_ref, tolerance=tolerance,gamma=0.9,norm_type=2)
+            # # calling the function that computes dt
+            if time_step == "const":
+                dt = time_step_val
+            elif time_step == "adptv":
+                dt = get_dt(dt_old=dt, main_method=required_methods[0], x_main=state_arr_main, x_ref=state_arr_ref, tolerance=tolerance,gamma=0.9,norm_type=2)
 
             if iter%iter_interval==0:
                 file_main.write(f"{state_arr_main[0]},{state_arr_main[1]},{state_arr_main[2]},{state_arr_main[3]},"+
@@ -158,3 +167,28 @@ if __name__ == '__main__':
 
 
 
+
+
+if __name__ == '__main__':
+    # Define the initial conditions
+    class_of_methods = "rk"
+    main_num = 4
+    ref_num = 5
+    precision_str = "64"
+    time_step = "adptv"
+    tolerance = 5.e-8
+
+    run_simulation(class_of_methods=class_of_methods, main_num=main_num, ref_num=ref_num, 
+                   precision_str=precision_str, time_step=time_step, time_step_val=None, tolerance=tolerance)
+
+
+    file_main_name = f"../../output_{precision_str}_{class_of_methods}{main_num}_{class_of_methods}{ref_num}_{time_step}_run001_main.csv"
+    df_main = pd.read_csv(file_main_name, dtype="float64")
+
+    dt_min = df_main["dt"].min()
+    print(f"Minimum dt: {dt_min}")
+
+    time_step_val = dt_min
+    time_step = "const"
+    run_simulation(class_of_methods=class_of_methods, main_num=main_num, ref_num=ref_num, 
+                   precision_str=precision_str, time_step=time_step, time_step_val=time_step_val, tolerance=tolerance)

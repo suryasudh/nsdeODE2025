@@ -129,11 +129,12 @@ def timestepper(tk:float, xk:np.ndarray, dt:float,
             f5main = func((tk + ((3/4) * dt)), (xk + (((3/16) * f1) + ((9/16) * f4_o1)) * dt), gas_obj, dens, prec)
 
         if reqdstr1 == "f6main":
-            f6main == func((tk + (1 * dt)), (xk + (((-3/7) * f1) +
+            f6main = func((tk + (1 * dt)), (xk + (((-3/7) * f1) +
                                                 ((2/7) * f2_o2) +
                                                 ((12/7) * f3_o3) +
                                                 ((-12/7) * f4_o1) +
                                                 ((8/7) * f5main)) * dt), gas_obj, dens, prec)
+            
 
     required_outputs = []
     for _method in required_methods:
@@ -191,7 +192,8 @@ def ab4(dt, xk, fn, fnm1, fnm2, fnm3):
 def ab5(dt, xk, fn, fnm1, fnm2, fnm3, fnm4):
     """
     """
-    xout = xk + ((dt/720) * ((1901 * fn) - (2774 * fnm1) + (2616 * fnm2) - (1274 * fnm3) + (251 * fnm4)))
+    x_out = xk + ((dt/720) * ((1901 * fn) - (2774 * fnm1) + (2616 * fnm2) - (1274 * fnm3) + (251 * fnm4)))
+    return x_out
 
 
 

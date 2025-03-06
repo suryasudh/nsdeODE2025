@@ -25,5 +25,6 @@ def get_dt(
     error: float = np.linalg.norm(x_main[:-1] - x_ref[:-1], ord=norm_type) # computing errors for Y values alone (temperature ignored)
     # print("Error: ",error)
         
-    dt_new: float = gamma * ((dt_old**(p_main + 1) * tolerance) / error) ** (1.0 / (p_main + 1))
+    # dt_new: float = gamma * ((dt_old**(p_main + 1) * tolerance) / error) ** (1.0 / (p_main + 1))
+    dt_new: float = gamma * dt_old * (tolerance / error) ** (1.0 / (p_main + 1))
     return dt_new
