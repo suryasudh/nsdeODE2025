@@ -7,9 +7,10 @@ import matplotlib.pyplot as plt
 import os
 import pandas as pd
 from time_and_memory import measure_time_and_memory
+from tqdm import tqdm
 
 def run_simulation(class_of_methods, main_num, ref_num, precision_str:str, 
-                   time_step:str, time_step_val=None, tolerance:float=1e-10, run_num:str="001",io_flag:bool=False):
+                   time_step:str, time_step_val=None, tolerance:float=1e-10, run_num:str="001", initial_temp:float=1000.0, io_flag:bool=False):
     dtype_global = None
     dtype_time = None
 
@@ -30,7 +31,7 @@ def run_simulation(class_of_methods, main_num, ref_num, precision_str:str,
     else:
         raise ValueError("Invalid precision string")
     gas_obj = ct.Solution("../yaml_files/h2_sandiego.yaml")
-    T0 = 1000.                              # Initial temperature in K
+    T0 = initial_temp                              # Initial temperature in K
     P0 = 101325.
     X0 = "H2:2.,O2:1.,N2:3.76"
     gas_obj.TPX = T0,P0,X0
@@ -53,7 +54,7 @@ def run_simulation(class_of_methods, main_num, ref_num, precision_str:str,
     if io_flag:
         file_main_name = f"../../output_{precision_str}_{class_of_methods}{main_num}_{class_of_methods}{ref_num}_{time_step}_run{run_num}_main.csv"
         file_ref_name = f"../../output_{precision_str}_{class_of_methods}{main_num}_{class_of_methods}{ref_num}_{time_step}_run{run_num}_ref.csv"
-        str_header = f"H2,H,O2,OH,O,H2O,HO2,H2O2,N2,temp,time,dt,error"
+        str_header = f"H2,H,O2,OH,O,H2O,HO2,H2O2,N2,temp,time,dt,error,iter"
         file_main = open(file_main_name, "w")
         file_ref = open(file_ref_name, "w")
         file_main.write(str_header + "\n")
@@ -134,11 +135,11 @@ def run_simulation(class_of_methods, main_num, ref_num, precision_str:str,
                 if iter%iter_interval==0:
                     file_main.write(f"{state_arr_main[0]},{state_arr_main[1]},{state_arr_main[2]},{state_arr_main[3]},"+
                                     f"{state_arr_main[4]},{state_arr_main[5]},{state_arr_main[6]},{state_arr_main[7]},"+
-                                    f"{state_arr_main[8]},{state_arr_main[9]},{t:.9e},{dt:.9e},{error:.9e}\n")
+                                    f"{state_arr_main[8]},{state_arr_main[9]},{t:.9e},{dt:.9e},{error:.9e},{iter}\n")
 
                     file_ref.write(f"{state_arr_ref[0]},{state_arr_ref[1]},{state_arr_ref[2]},{state_arr_ref[3]},"+
                                    f"{state_arr_ref[4]},{state_arr_ref[5]},{state_arr_ref[6]},{state_arr_ref[7]},"+
-                                   f"{state_arr_ref[8]},{state_arr_ref[9]},{t:.9e},{dt:.9e},{error:.9e}\n")
+                                   f"{state_arr_ref[8]},{state_arr_ref[9]},{t:.9e},{dt:.9e},{error:.9e},{iter}\n")
 
 
 
@@ -166,11 +167,11 @@ def run_simulation(class_of_methods, main_num, ref_num, precision_str:str,
                 if iter%iter_interval==0:
                     file_main.write(f"{state_arr_main[0]},{state_arr_main[1]},{state_arr_main[2]},{state_arr_main[3]},"+
                                     f"{state_arr_main[4]},{state_arr_main[5]},{state_arr_main[6]},{state_arr_main[7]},"+
-                                    f"{state_arr_main[8]},{state_arr_main[9]},{t:.9e},{dt:.9e},{error:.9e}\n")
+                                    f"{state_arr_main[8]},{state_arr_main[9]},{t:.9e},{dt:.9e},{error:.9e},{iter}\n")
 
                     file_ref.write(f"{state_arr_ref[0]},{state_arr_ref[1]},{state_arr_ref[2]},{state_arr_ref[3]},"+
                                    f"{state_arr_ref[4]},{state_arr_ref[5]},{state_arr_ref[6]},{state_arr_ref[7]},"+
-                                   f"{state_arr_ref[8]},{state_arr_ref[9]},{t:.9e},{dt:.9e},{error:.9e}\n")
+                                   f"{state_arr_ref[8]},{state_arr_ref[9]},{t:.9e},{dt:.9e},{error:.9e},{iter}\n")
     if io_flag:
         file_main.close()
         file_ref.close()
@@ -180,49 +181,88 @@ def run_simulation(class_of_methods, main_num, ref_num, precision_str:str,
 
 
 if __name__ == '__main__':
-    # Define the initial conditions
-    class_of_methods = "rk"
-    main_num = 2
-    ref_num = 3
-    precision_str = "64"
-    time_step = "adptv"
-    tolerance = 1.e-9
-    run_num = "001"
+    for initial_temp in tqdm([1000.0, 1050.0, 1100.0, 1150.0, 1200.0, 1250.0, 1300.0, 1350.0]):
+        # Define the initial conditions
+        class_of_methods = "ab"
+        main_num = 1
+        ref_num = 2
+        precision_str = "32"
+        time_step = "adptv"
+        tolerance = 1.e-9
+        # initial_temp = 1000.0
 
-    ###########################################################
-    ### ADAPTIVE TIME STEPPING
-    ###########################################################
-    run_simulation(class_of_methods=class_of_methods, main_num=main_num, ref_num=ref_num, 
-                   precision_str=precision_str, time_step=time_step, time_step_val=None, tolerance=tolerance, run_num=run_num,io_flag=True)
-    
-    (_, adapt_time, adapt_cur_mem, adapt_peak_mem) = measure_time_and_memory(
-        run_simulation, class_of_methods=class_of_methods, main_num=main_num, ref_num=ref_num, 
-                   precision_str=precision_str, time_step=time_step, time_step_val=None, tolerance=tolerance, run_num=run_num,io_flag=False
-    )
-    print("======== ADAPTIVE RUN ========")
-    print(f"Total time:   {adapt_time:.6f} s")
-    print(f"Memory usage: current={adapt_cur_mem} bytes, peak={adapt_peak_mem} bytes")
+        run_num = None
+        if initial_temp == 1000.0:
+            run_num = "001"
+        elif initial_temp == 1050.0:
+            run_num = "002"
+        elif initial_temp == 1100.0:
+            run_num = "003"
+        elif initial_temp == 1150.0:
+            run_num = "004"
+        elif initial_temp == 1200.0:
+            run_num = "005"
+        elif initial_temp == 1250.0:
+            run_num = "006"
+        elif initial_temp == 1300.0:
+            run_num = "007"
+        elif initial_temp == 1350.0:
+            run_num = "008"
+        
 
-    file_main_name = f"../../output_{precision_str}_{class_of_methods}{main_num}_{class_of_methods}{ref_num}_{time_step}_run{run_num}_main.csv"
-    df_main = pd.read_csv(file_main_name, dtype="float64")
+        logging_file_name = f"../../logging_resultsab32.txt"
+        logging_file = open(logging_file_name, "a")
+        logging_file.write("======== RUN SUMMARY ========\n")
+        logging_file.write(f"Initial temperature: {initial_temp}\n")
+        logging_file.write(f"Precision: {precision_str}\n")
+        logging_file.write(f"Main: {class_of_methods}{main_num}, Ref:{class_of_methods}{ref_num}, dt_initial={time_step}, run={run_num}\n")
 
-    dt_min = df_main["dt"].min()
-    print(f"Minimum dt: {dt_min}")
+        ###########################################################
+        ### ADAPTIVE TIME STEPPING
+        ###########################################################
+        run_simulation(class_of_methods=class_of_methods, main_num=main_num, ref_num=ref_num, 
+                    precision_str=precision_str, time_step=time_step, time_step_val=None, tolerance=tolerance, run_num=run_num, initial_temp=initial_temp, io_flag=True)
+        
+        (_, adapt_time, adapt_cur_mem, adapt_peak_mem) = measure_time_and_memory(
+            run_simulation, class_of_methods=class_of_methods, main_num=main_num, ref_num=ref_num, 
+                    precision_str=precision_str, time_step=time_step, time_step_val=None, tolerance=tolerance, run_num=run_num, initial_temp=initial_temp, io_flag=False
+        )
 
-    ###########################################################
-    ### CONSTANT TIME STEPPING
-    ###########################################################
+        logging_file.write(f"*** ADAPTIVE DT RUN ***\n")
+        logging_file.write(f"perf_run_time: {adapt_time:.6f} s, Current Memory: {adapt_cur_mem} bytes, Peak Memory: {adapt_peak_mem} bytes\n")
 
-    time_step_val = dt_min
-    time_step = "const"
+        file_main_name = f"../../output_{precision_str}_{class_of_methods}{main_num}_{class_of_methods}{ref_num}_{time_step}_run{run_num}_main.csv"
+        df_main = pd.read_csv(file_main_name, dtype="float64")
 
-    run_simulation(class_of_methods=class_of_methods, main_num=main_num, ref_num=ref_num, 
-                   precision_str=precision_str, time_step=time_step, time_step_val=time_step_val, tolerance=tolerance, run_num=run_num,io_flag=True)
+        dt_iter_max = df_main["iter"].max()        
+        logging_file.write(f"Maximum iterations: {dt_iter_max}\n")
 
-    (_, const_time, const_cur_mem, const_peak_mem) = measure_time_and_memory(
-        run_simulation, class_of_methods=class_of_methods, main_num=main_num, ref_num=ref_num, 
-                   precision_str=precision_str, time_step=time_step, time_step_val=time_step_val, tolerance=tolerance, run_num=run_num,io_flag=False
-    )
-    print("======== CONSTANT DT RUN ========")
-    print(f"Total time:   {const_time:.6f} s")
-    print(f"Memory usage: current={const_cur_mem} bytes, peak={const_peak_mem} bytes")
+        dt_min = df_main["dt"].min()
+        logging_file.write(f"Minimum dt: {dt_min} from adaptive method (used for const timestepping below)\n")
+
+        ###########################################################
+        ### CONSTANT TIME STEPPING
+        ###########################################################
+        logging_file.write(f"*** CONSTANT DT RUN ***\n")
+
+        time_step_val = dt_min
+        time_step = "const"
+
+        run_simulation(class_of_methods=class_of_methods, main_num=main_num, ref_num=ref_num, 
+                    precision_str=precision_str, time_step=time_step, time_step_val=time_step_val, tolerance=tolerance, initial_temp=initial_temp, run_num=run_num,io_flag=True)
+
+        (_, const_time, const_cur_mem, const_peak_mem) = measure_time_and_memory(
+            run_simulation, class_of_methods=class_of_methods, main_num=main_num, ref_num=ref_num, 
+                    precision_str=precision_str, time_step=time_step, time_step_val=time_step_val, tolerance=tolerance, initial_temp=initial_temp, run_num=run_num,io_flag=False
+        )
+
+        logging_file.write(f"perf_run_time: {const_time:.6f} s, Current Memory: {const_cur_mem} bytes, Peak Memory: {const_peak_mem} bytes\n")
+
+        file_main_name = f"../../output_{precision_str}_{class_of_methods}{main_num}_{class_of_methods}{ref_num}_{time_step}_run{run_num}_main.csv"
+        df_main = pd.read_csv(file_main_name, dtype="float64")
+
+        dt_iter_max = df_main["iter"].max()        
+        logging_file.write(f"Maximum iterations: {dt_iter_max}\n")
+
+        logging_file.write("======== END OF RUN ========\n\n")
+        logging_file.close()
