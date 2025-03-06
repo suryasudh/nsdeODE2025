@@ -6,8 +6,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
+from time_and_memory import measure_time_and_memory
 
-def run_simulation(class_of_methods, main_num, ref_num, precision_str:str, time_step:str, time_step_val=None, tolerance:float=1e-10):
+def run_simulation(class_of_methods, main_num, ref_num, precision_str:str, 
+                   time_step:str, time_step_val=None, tolerance:float=1e-10, run_num:str="001",io_flag:bool=False):
     dtype_global = None
     dtype_time = None
 
@@ -48,13 +50,14 @@ def run_simulation(class_of_methods, main_num, ref_num, precision_str:str, time_
     required_methods=[f"rk{main_num}", f"rk{ref_num}"]
     required_methods_ab=[f"ab{main_num}", f"ab{ref_num}"]   # both are needed because ab is not self starting
 
-    file_main_name = f"../../output_{precision_str}_{class_of_methods}{main_num}_{class_of_methods}{ref_num}_{time_step}_run001_main.csv"
-    file_ref_name = f"../../output_{precision_str}_{class_of_methods}{main_num}_{class_of_methods}{ref_num}_{time_step}_run001_ref.csv"
-    str_header = f"H2,H,O2,OH,O,H2O,HO2,H2O2,N2,temp,time,dt"
-    file_main = open(file_main_name, "w")
-    file_ref = open(file_ref_name, "w")
-    file_main.write(str_header + "\n")
-    file_ref.write(str_header + "\n")
+    if io_flag:
+        file_main_name = f"../../output_{precision_str}_{class_of_methods}{main_num}_{class_of_methods}{ref_num}_{time_step}_run{run_num}_main.csv"
+        file_ref_name = f"../../output_{precision_str}_{class_of_methods}{main_num}_{class_of_methods}{ref_num}_{time_step}_run{run_num}_ref.csv"
+        str_header = f"H2,H,O2,OH,O,H2O,HO2,H2O2,N2,temp,time,dt,error"
+        file_main = open(file_main_name, "w")
+        file_ref = open(file_ref_name, "w")
+        file_main.write(str_header + "\n")
+        file_ref.write(str_header + "\n")
 
 
     t = np.array(0.0, dtype=dtype_time)
@@ -122,18 +125,20 @@ def run_simulation(class_of_methods, main_num, ref_num, precision_str:str, time_
 
             # calling the function that computes dt
             if time_step == "const":
+                _, error = get_dt(dt_old=dt, main_method=required_methods[0], x_main=state_arr_main, x_ref=state_arr_ref, tolerance=tolerance,gamma=0.9,norm_type=2)
                 dt = time_step_val
             elif time_step == "adptv":
-                dt = get_dt(dt_old=dt, main_method=required_methods[0], x_main=state_arr_main, x_ref=state_arr_ref, tolerance=tolerance,gamma=0.9,norm_type=2)
+                dt, error = get_dt(dt_old=dt, main_method=required_methods[0], x_main=state_arr_main, x_ref=state_arr_ref, tolerance=tolerance,gamma=0.9,norm_type=2)
 
-            if iter%iter_interval==0:
-                file_main.write(f"{state_arr_main[0]},{state_arr_main[1]},{state_arr_main[2]},{state_arr_main[3]},"+
-                                f"{state_arr_main[4]},{state_arr_main[5]},{state_arr_main[6]},{state_arr_main[7]},"+
-                                f"{state_arr_main[8]},{state_arr_main[9]},{t:.9e},{dt:.9e}\n")
-            
-                file_ref.write(f"{state_arr_ref[0]},{state_arr_ref[1]},{state_arr_ref[2]},{state_arr_ref[3]},"+
-                               f"{state_arr_ref[4]},{state_arr_ref[5]},{state_arr_ref[6]},{state_arr_ref[7]},"+
-                               f"{state_arr_ref[8]},{state_arr_ref[9]},{t:.9e},{dt:.9e}\n")
+            if io_flag:
+                if iter%iter_interval==0:
+                    file_main.write(f"{state_arr_main[0]},{state_arr_main[1]},{state_arr_main[2]},{state_arr_main[3]},"+
+                                    f"{state_arr_main[4]},{state_arr_main[5]},{state_arr_main[6]},{state_arr_main[7]},"+
+                                    f"{state_arr_main[8]},{state_arr_main[9]},{t:.9e},{dt:.9e},{error:.9e}\n")
+
+                    file_ref.write(f"{state_arr_ref[0]},{state_arr_ref[1]},{state_arr_ref[2]},{state_arr_ref[3]},"+
+                                   f"{state_arr_ref[4]},{state_arr_ref[5]},{state_arr_ref[6]},{state_arr_ref[7]},"+
+                                   f"{state_arr_ref[8]},{state_arr_ref[9]},{t:.9e},{dt:.9e},{error:.9e}\n")
 
 
 
@@ -152,18 +157,23 @@ def run_simulation(class_of_methods, main_num, ref_num, precision_str:str, time_
             # dt = get_dt(dt_old=dt, main_method=required_methods[0], x_main=state_arr_main, x_ref=state_arr_ref, tolerance=tolerance,gamma=0.9,norm_type=2)
             # # calling the function that computes dt
             if time_step == "const":
+                _, error = get_dt(dt_old=dt, main_method=required_methods[0], x_main=state_arr_main, x_ref=state_arr_ref, tolerance=tolerance,gamma=0.9,norm_type=2)
                 dt = time_step_val
             elif time_step == "adptv":
-                dt = get_dt(dt_old=dt, main_method=required_methods[0], x_main=state_arr_main, x_ref=state_arr_ref, tolerance=tolerance,gamma=0.9,norm_type=2)
+                dt, error = get_dt(dt_old=dt, main_method=required_methods[0], x_main=state_arr_main, x_ref=state_arr_ref, tolerance=tolerance,gamma=0.9,norm_type=2)
 
-            if iter%iter_interval==0:
-                file_main.write(f"{state_arr_main[0]},{state_arr_main[1]},{state_arr_main[2]},{state_arr_main[3]},"+
-                                f"{state_arr_main[4]},{state_arr_main[5]},{state_arr_main[6]},{state_arr_main[7]},"+
-                                f"{state_arr_main[8]},{state_arr_main[9]},{t:.9e},{dt:.9e}\n")
-            
-                file_ref.write(f"{state_arr_ref[0]},{state_arr_ref[1]},{state_arr_ref[2]},{state_arr_ref[3]},"+
-                               f"{state_arr_ref[4]},{state_arr_ref[5]},{state_arr_ref[6]},{state_arr_ref[7]},"+
-                               f"{state_arr_ref[8]},{state_arr_ref[9]},{t:.9e},{dt:.9e}\n")
+            if io_flag:
+                if iter%iter_interval==0:
+                    file_main.write(f"{state_arr_main[0]},{state_arr_main[1]},{state_arr_main[2]},{state_arr_main[3]},"+
+                                    f"{state_arr_main[4]},{state_arr_main[5]},{state_arr_main[6]},{state_arr_main[7]},"+
+                                    f"{state_arr_main[8]},{state_arr_main[9]},{t:.9e},{dt:.9e},{error:.9e}\n")
+
+                    file_ref.write(f"{state_arr_ref[0]},{state_arr_ref[1]},{state_arr_ref[2]},{state_arr_ref[3]},"+
+                                   f"{state_arr_ref[4]},{state_arr_ref[5]},{state_arr_ref[6]},{state_arr_ref[7]},"+
+                                   f"{state_arr_ref[8]},{state_arr_ref[9]},{t:.9e},{dt:.9e},{error:.9e}\n")
+    if io_flag:
+        file_main.close()
+        file_ref.close()
 
 
 
@@ -172,23 +182,47 @@ def run_simulation(class_of_methods, main_num, ref_num, precision_str:str, time_
 if __name__ == '__main__':
     # Define the initial conditions
     class_of_methods = "rk"
-    main_num = 4
-    ref_num = 5
+    main_num = 2
+    ref_num = 3
     precision_str = "64"
     time_step = "adptv"
-    tolerance = 5.e-8
+    tolerance = 1.e-9
+    run_num = "001"
 
+    ###########################################################
+    ### ADAPTIVE TIME STEPPING
+    ###########################################################
     run_simulation(class_of_methods=class_of_methods, main_num=main_num, ref_num=ref_num, 
-                   precision_str=precision_str, time_step=time_step, time_step_val=None, tolerance=tolerance)
+                   precision_str=precision_str, time_step=time_step, time_step_val=None, tolerance=tolerance, run_num=run_num,io_flag=True)
+    
+    (_, adapt_time, adapt_cur_mem, adapt_peak_mem) = measure_time_and_memory(
+        run_simulation, class_of_methods=class_of_methods, main_num=main_num, ref_num=ref_num, 
+                   precision_str=precision_str, time_step=time_step, time_step_val=None, tolerance=tolerance, run_num=run_num,io_flag=False
+    )
+    print("======== ADAPTIVE RUN ========")
+    print(f"Total time:   {adapt_time:.6f} s")
+    print(f"Memory usage: current={adapt_cur_mem} bytes, peak={adapt_peak_mem} bytes")
 
-
-    file_main_name = f"../../output_{precision_str}_{class_of_methods}{main_num}_{class_of_methods}{ref_num}_{time_step}_run001_main.csv"
+    file_main_name = f"../../output_{precision_str}_{class_of_methods}{main_num}_{class_of_methods}{ref_num}_{time_step}_run{run_num}_main.csv"
     df_main = pd.read_csv(file_main_name, dtype="float64")
 
     dt_min = df_main["dt"].min()
     print(f"Minimum dt: {dt_min}")
 
+    ###########################################################
+    ### CONSTANT TIME STEPPING
+    ###########################################################
+
     time_step_val = dt_min
     time_step = "const"
+
     run_simulation(class_of_methods=class_of_methods, main_num=main_num, ref_num=ref_num, 
-                   precision_str=precision_str, time_step=time_step, time_step_val=time_step_val, tolerance=tolerance)
+                   precision_str=precision_str, time_step=time_step, time_step_val=time_step_val, tolerance=tolerance, run_num=run_num,io_flag=True)
+
+    (_, const_time, const_cur_mem, const_peak_mem) = measure_time_and_memory(
+        run_simulation, class_of_methods=class_of_methods, main_num=main_num, ref_num=ref_num, 
+                   precision_str=precision_str, time_step=time_step, time_step_val=time_step_val, tolerance=tolerance, run_num=run_num,io_flag=False
+    )
+    print("======== CONSTANT DT RUN ========")
+    print(f"Total time:   {const_time:.6f} s")
+    print(f"Memory usage: current={const_cur_mem} bytes, peak={const_peak_mem} bytes")
