@@ -1,3 +1,10 @@
+""" This code is used for plotting species, temperature, dt related images.
+
+__author__ =
+    "Aswin, Deepti, Sahu"
+__copyright__ = CDS, IISc, 2025
+
+"""
 import matplotlib.pyplot as plt
 import pandas as pd
 from tqdm import tqdm
