@@ -3,9 +3,9 @@ import pandas as pd
 from tqdm import tqdm
 
 for run_i in tqdm(range(1, 9)):
-    class_of_methods = "rk"
+    class_of_methods = "ab"
 
-    main_scheme_num, ref_scheme_num = "2", "3"
+    main_scheme_num, ref_scheme_num = "4", "5"
     main_scheme = f"{class_of_methods}{main_scheme_num}"
     ref_scheme = f"{class_of_methods}{ref_scheme_num}"
     time_stepping = "adptv"
